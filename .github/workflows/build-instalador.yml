@@ -22,20 +22,22 @@ jobs:
       shell: pwsh
       name: Definir versão do pacote
     - run: |
-        msbuild ./src/Calculator/Calculator.csproj `
+        msbuild ./src/Calculator.slnx `
           -restore `
           -p:RestorePackagesConfig=true `
           -p:OutDir=${{ github.workspace }}\output\ `
           -p:Platform=x64 `
           -p:Configuration=Release `
           -p:GenerateProjectSpecificOutputFolder=true `
-          -maxCpuCount
+          -maxCpuCount `
+          -t:Publish `
+          -p:PublishDir=${{ github.workspace }}\output\publish\
       shell: pwsh
       name: Compilar a Calculadora
     - run: |
         $dest = "${{ github.workspace }}\instalador-final"
         New-Item -ItemType Directory -Path $dest -Force | Out-Null
-        $pkg = Get-ChildItem -Path "${{ github.workspace }}\output" -Recurse -Directory -Filter "Calculator*_Test" | Select-Object -First 1
+        $pkg = Get-ChildItem -Path "${{ github.workspace }}\output" -Recurse -Directory -Filter "Calculator_*_Test" | Where-Object { $_.Parent.Parent.Name -eq "Calculator" } | Select-Object -First 1
         if (-not $pkg) { Write-Error "Pasta do pacote (Calculator*_Test) não encontrada" -ErrorAction Stop }
         Copy-Item -Path $pkg.FullName -Destination "$dest\pacote" -Recurse
         Copy-Item ./build/scripts/SignTestApp.ps1 $dest
