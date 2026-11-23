@@ -301,11 +301,19 @@ void CHistoryCollector::CompleteHistoryLine(wstring_view numStr)
     ReinitHistory();
 }
 
-void CHistoryCollector::CompleteEquation(std::wstring_view numStr)
+void CHistoryCollector::CompleteEquation(std::wstring_view numStr, std::wstring_view annotation)
 {
     // Add only '=' token and not add EQU command, because
     // EQU command breaks loading from history (it duplicate history entries).
     IchAddSzToEquationSz(CCalcEngine::OpCodeToString(IDC_EQU), -1);
+
+    // Texto informativo opcional exibido após o '=' (ex.: "(diferença de 20%)").
+    // Usa índice de comando -1 para não ser editável nem interferir no recálculo do histórico.
+    if (!annotation.empty())
+    {
+        IchAddSzToEquationSz(L" ", -1);
+        IchAddSzToEquationSz(annotation, -1);
+    }
 
     SetExpressionDisplay();
     CompleteHistoryLine(numStr);

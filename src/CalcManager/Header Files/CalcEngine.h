@@ -86,6 +86,7 @@ public:
     }
     std::wstring GroupDigitsPerRadix(std::wstring_view numberString, uint32_t radix);
     std::wstring GetStringForDisplay(CalcEngine::Rational const& rat, uint32_t radix);
+    std::wstring GetSubtractionPercentAnnotation(CalcEngine::Rational const& minuend, CalcEngine::Rational const& subtrahend);
     void UpdateMaxIntDigits();
     wchar_t DecimalSeparator() const;
 

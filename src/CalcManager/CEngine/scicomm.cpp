@@ -486,6 +486,7 @@ void CCalcEngine::ProcessCommandWorker(OpCode wParam)
         /* EQU enables the user to press it multiple times after and      */
         /* operation to enable repeats of the last operation.             */
     case IDC_EQU:
+    {
         while (m_openParenCount > 0)
         {
             // when m_bError is set and m_ParNum is non-zero it goes into infinite loop
@@ -518,6 +519,16 @@ void CCalcEngine::ProcessCommandWorker(OpCode wParam)
             m_HistoryCollector.AddOpndToHistory(m_numberString, m_currentVal);
         }
 
+        // Subtração simples (a - b): calcula a diferença percentual de b em relação a a.
+        // Ex.: 10 - 2 = 8 -> "(diferença de 20%)".
+        wstring subtractionAnnotation{};
+        if (m_nOpCode == IDC_SUB && m_precedenceOpCount == 0 && !m_fIntegerMode && !m_bError)
+        {
+            // Em "=" repetido (10 - 2 = =), o subtraendo é o valor guardado em m_holdVal.
+            Rational const& subtrahend = m_bNoPrevEqu ? m_currentVal : m_holdVal;
+            subtractionAnnotation = GetSubtractionPercentAnnotation(m_lastVal, subtrahend);
+        }
+
         // Evaluate the precedence stack.
         ResolveHighestPrecedenceOperation();
         while (m_fPrecedence && m_precedenceOpCount > 0)
@@ -543,7 +554,7 @@ void CCalcEngine::ProcessCommandWorker(OpCode wParam)
         if (!m_bError)
         {
             wstring groupedString = GroupDigitsPerRadix(m_numberString, m_radix);
-            m_HistoryCollector.CompleteEquation(groupedString);
+            m_HistoryCollector.CompleteEquation(groupedString, subtractionAnnotation);
 
             m_lastVal = m_currentVal;
             m_nPrevOpCode = 0; 
@@ -552,6 +563,7 @@ void CCalcEngine::ProcessCommandWorker(OpCode wParam)
 
         m_bChangeOp = false;
         break;
+    }
 
     case IDC_OPENP:
     case IDC_CLOSEP:
@@ -1190,6 +1202,32 @@ wstring CCalcEngine::GetStringForDisplay(Rational const& rat, uint32_t radix)
     }
 
     return result;
+}
+
+// Retorna "(diferença de X%)", onde X = |subtraendo / minuendo| * 100, arredondado para 2 casas.
+// Retorna string vazia se o primeiro operando for zero (porcentagem indefinida).
+wstring CCalcEngine::GetSubtractionPercentAnnotation(Rational const& minuend, Rational const& subtrahend)
+{
+    if (minuend == Rational{ 0 })
+    {
+        return {};
+    }
+
+    try
+    {
+        Rational percent = RationalMath::Abs(subtrahend / minuend) * Rational{ 100 };
+
+        // Arredonda para 2 casas decimais: floor(x * 100 + 0.5) / 100
+        Rational rounded = RationalMath::Integer(percent * Rational{ 100 } + Rational{ 1 } / Rational{ 2 }) / Rational{ 100 };
+
+        wstring percentString = rounded.ToString(10, NumberFormat::Float, m_precision);
+        return L"(diferen\u00e7a de " + percentString + L"%)";
+    }
+    catch (uint32_t)
+    {
+        // Erro de cálculo (overflow etc.): apenas não mostra a anotação.
+        return {};
+    }
 }
 
 double CCalcEngine::GenerateRandomNumber()
