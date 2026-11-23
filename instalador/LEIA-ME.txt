@@ -1,0 +1,14 @@
+Calculadora do Windows com porcentagem na subtração
+====================================================
+
+Exemplo: 10 - 2 = (diferença de 20%)
+
+Como instalar (Windows 10/11, x64):
+1. Ative o Modo de desenvolvedor:
+   Configurações > Sistema > Para desenvolvedores > Modo de desenvolvedor = Ativado
+2. Extraia este .zip numa pasta.
+3. Abra o PowerShell como Administrador, entre na pasta e rode:
+   powershell -ExecutionPolicy Bypass -File .\instalar.ps1
+4. Abra "Calculator [Dev]" no Menu Iniciar. A calculadora original continua instalada.
+
+Para desinstalar: Configurações > Aplicativos > "Calculator [Dev]" > Desinstalar.
